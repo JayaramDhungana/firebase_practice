@@ -1,9 +1,13 @@
 import 'package:firebase_practice/UI/login_screen.dart';
+import 'package:firebase_practice/provider/loading_provider.dart';
 import 'package:firebase_practice/provider/login_provider.dart';
 import 'package:firebase_practice/provider/signup_provider.dart';
+import 'package:firebase_practice/utils/utils.dart';
 import 'package:firebase_practice/widgets/rounded_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -31,6 +35,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     passwordController.dispose();
     passwordFocusNode.dispose();
   }
+
+  ///now Firebase Authentication
+  FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -111,14 +118,51 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       emailController.text.trim(),
                       passwordController.text.trim(),
                     )) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text("SignUp  Success")));
+                  ref.read(loadingProvider).changeLoadingState(true);
+                  _auth
+                      .createUserWithEmailAndPassword(
+                        email: emailController.text.trim(),
+                        password: passwordController.text.trim(),
+                      )
+                      .then((value) {
+                        ref.read(loadingProvider).changeLoadingState(false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            content: Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.white),
+                                SizedBox(width: 25),
+                                Text(
+                                  "SignUp  Success",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 3),
+                            margin: EdgeInsets.all(16),
+                            elevation: 6,
+                          ),
+                        );
+                      })
+                      .onError((error, stackTrace) {
+                        ref.read(loadingProvider).changeLoadingState(false);
+                        Utils().toastMessage(error.toString().split('] ').last);
+                      });
                 } else {
                   FocusScope.of(context).unfocus();
                 }
               },
               child: roundedButton(
+                apploadingstate: ref.watch(loadingProvider).isLoading,
                 backgroundColor: Colors.deepPurple,
                 buttonText: "Sign Up",
               ),

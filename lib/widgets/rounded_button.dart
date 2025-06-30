@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 Ink roundedButton({
   required Color backgroundColor,
   required String buttonText,
+  bool apploadingstate=false,
 }) {
   return Ink(
     height: 50,
@@ -12,7 +13,10 @@ Ink roundedButton({
       color: backgroundColor,
     ),
     child: Center(
-      child: Text(buttonText, style: TextStyle(color: Colors.white)),
+      child: apploadingstate?CircularProgressIndicator(
+        color: Colors.white,
+        strokeWidth: 4,
+      ): Text(buttonText, style: TextStyle(color: Colors.white)),
     ),
   );
 }
