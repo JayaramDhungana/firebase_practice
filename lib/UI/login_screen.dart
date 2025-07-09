@@ -1,5 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_practice/UI/posts/post_screen.dart';
 import 'package:firebase_practice/UI/sign_up_screen.dart';
+import 'package:firebase_practice/provider/loading_provider.dart';
 import 'package:firebase_practice/provider/login_provider.dart';
+import 'package:firebase_practice/utils/utils.dart';
 import 'package:firebase_practice/widgets/rounded_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +19,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
+  //firebase auth
+  final auth = FirebaseAuth.instance;
+
   var formKey = GlobalKey<FormFieldState>();
 
   FocusNode emailFocusNode = FocusNode();
@@ -28,6 +35,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     passwordController.dispose();
     emailFocusNode.dispose();
     passwordFocusNode.dispose();
+  }
+
+  void login() {
+    auth
+        .signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        )
+        .then((value) {
+          ref.read(loadingProvider).changeLoadingState(false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              backgroundColor: Colors.green,
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 25),
+                  Text(
+                    "Login  Success",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              behavior: SnackBarBehavior.floating,
+              elevation: 6,
+              margin: EdgeInsets.all(16),
+              duration: Duration(seconds: 3),
+            ),
+          );
+
+          //Next Screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => PostScreen()),
+          );
+        })
+        .onError((error, stackTrace) {
+          ref.read(loadingProvider).changeLoadingState(false);
+          Utils().toastMessage(error.toString().split('] ').last);
+        });
   }
 
   @override
@@ -111,14 +162,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       emailController.text.trim(),
                       passwordController.text.trim(),
                     )) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text("Login  Success")));
+                  login();
+                  ref.read(loadingProvider).changeLoadingState(true);
                 } else {
                   FocusScope.of(context).unfocus();
                 }
               },
               child: roundedButton(
+                apploadingstate: ref.watch(loadingProvider).isLoading,
                 backgroundColor: Colors.deepPurple,
                 buttonText: "Login",
               ),
