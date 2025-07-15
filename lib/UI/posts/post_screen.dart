@@ -2,21 +2,37 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:firebase_practice/UI/posts/add_post.dart';
+import 'package:firebase_practice/provider/search_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PostScreen extends StatefulWidget {
+class PostScreen extends ConsumerStatefulWidget {
   const PostScreen({super.key});
 
   @override
-  State<PostScreen> createState() => _PostScreenState();
+  ConsumerState<PostScreen> createState() => _PostScreenState();
 }
 
-class _PostScreenState extends State<PostScreen> {
+class _PostScreenState extends ConsumerState<PostScreen> {
   final auth = FirebaseAuth.instance;
-  final ref = FirebaseDatabase.instance.ref("Post");
+  final fireBaseRef = FirebaseDatabase.instance.ref("Post");
+
+  //TextField
+  TextEditingController searchController = TextEditingController();
+  //FocusNode
+  FocusNode searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    searchFocusNode.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final searchQuery = ref.watch(searchProvider).searchQuery.toLowerCase();
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -32,11 +48,11 @@ class _PostScreenState extends State<PostScreen> {
       ),
       body: Column(
         children: [
-          //Yo talako code chai stream builder bata gareko ho, stream builder pani ekdamai important 
-          //kura ho 
+          //Yo talako code chai stream builder bata gareko ho, stream builder pani ekdamai important
+          //kura ho
           // Expanded(
           //   child: StreamBuilder(
-          //     stream: ref.onValue,
+          //     stream: fireBaseRef.onValue,
           //     builder: (context, AsyncSnapshot<DatabaseEvent> snapshot) {
           //       if (snapshot.connectionState == ConnectionState.waiting) {
           //         return Center(child: CircularProgressIndicator());
@@ -52,7 +68,7 @@ class _PostScreenState extends State<PostScreen> {
           //         return Center(child: Text("No data found"));
           //       }
 
-          //       // yeha value bhaneko chai firebase bata aayeko raw data ho jaslai 
+          //       // yeha value bhaneko chai firebase bata aayeko raw data ho jaslai
           //       //yeha Map ma forcefully rakhidai xa
 
           //       final map = value as Map<dynamic, dynamic>;
@@ -73,15 +89,43 @@ class _PostScreenState extends State<PostScreen> {
           //     },
           //   ),
           // ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              focusNode: searchFocusNode,
+              controller: searchController,
+              onTapOutside: (event) {
+                FocusScope.of(context).unfocus();
+              },
+              onChanged: (value) {
+                ref.read(searchProvider).updateSearchQuery(value);
+              },
+              decoration: InputDecoration(
+                hintText: "Search",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: FirebaseAnimatedList(
               defaultChild: Center(child: CircularProgressIndicator()),
-              query: ref,
+              query: fireBaseRef,
               itemBuilder: (context, snapshot, animation, index) {
+                 final title = snapshot.child('post').value.toString();
+
+                // Apply search filtering
+                if (searchQuery.isNotEmpty &&
+                    !title.toLowerCase().contains(searchQuery)) {
+                  return SizedBox.shrink(); // Don't render this item
+                }
+
                 return ListTile(
-                  leading: CircleAvatar(child: Text("${index + 1}")),
-                  title: Text(snapshot.child("post").value.toString()),
+                  leading: CircleAvatar(child: Text('${index + 1}')),
+                  title: Text(title),
                 );
+               
               },
             ),
           ),
