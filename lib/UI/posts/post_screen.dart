@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:firebase_practice/UI/login_screen.dart';
 import 'package:firebase_practice/UI/posts/add_post.dart';
 import 'package:firebase_practice/provider/search_provider.dart';
+import 'package:firebase_practice/utils/utils.dart';
 import 'package:firebase_practice/widgets/post_delete_dialog.dart';
 import 'package:firebase_practice/widgets/post_update_dialog.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +50,47 @@ class _PostScreenState extends ConsumerState<PostScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 10),
-            child: Icon(Icons.logout, color: Colors.white),
+            child: IconButton(
+              icon: Icon(Icons.logout),
+              color: Colors.white,
+              onPressed: () {
+                debugPrint("Button Tapped");
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      content: Text("Do you Really Want to LogOut?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            auth
+                                .signOut()
+                                .then((value) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => LoginScreen(),
+                                    ),
+                                  );
+                                })
+                                .onError((error, StackTrace) {
+                                  Utils().toastMessage(error.toString());
+                                });
+                          },
+                          child: Text("Yes"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text("No"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -162,7 +204,6 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                               rootcontext: context,
                               id: snapshot.child('id').value.toString(),
                             );
-                           
                           },
                           value: 2,
                           child: ListTile(
