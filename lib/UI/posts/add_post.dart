@@ -59,15 +59,13 @@ class _AddPostState extends ConsumerState<AddPost> {
             InkWell(
               onTap: () {
                 ref.read(loadingProvider).changeLoadingState(true);
+                final id = DateTime.now().microsecondsSinceEpoch.toString();
                 databaseRef
-                    .child(DateTime.now().microsecondsSinceEpoch.toString())
+                    .child(id)
                     //Khas ma Yo child ma chai id jastai dine raixa yo chai hamro data ko parent node
                     //bando raixa , yesko pani arko sub node dina chai ".child" garera pheri dina milxa re
                     //yehi mathi nai
-                    .set({
-                      'id': DateTime.now().microsecondsSinceEpoch.toString(),
-                      'post': postController.text.toString(),
-                    })
+                    .set({'id': id, 'post': postController.text.toString()})
                     .then((value) {
                       ref.read(loadingProvider).changeLoadingState(false);
                       ScaffoldMessenger.of(context).showSnackBar(

@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:firebase_practice/UI/posts/add_post.dart';
 import 'package:firebase_practice/provider/search_provider.dart';
+import 'package:firebase_practice/widgets/post_update_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,14 +21,18 @@ class _PostScreenState extends ConsumerState<PostScreen> {
 
   //TextField
   TextEditingController searchController = TextEditingController();
+  TextEditingController updateController = TextEditingController();
+
   //FocusNode
   FocusNode searchFocusNode = FocusNode();
+  FocusNode updateFocusNode = FocusNode();
 
   @override
   void dispose() {
     // TODO: implement dispose
     super.dispose();
     searchFocusNode.dispose();
+    updateFocusNode.dispose();
   }
 
   @override
@@ -113,7 +118,7 @@ class _PostScreenState extends ConsumerState<PostScreen> {
               defaultChild: Center(child: CircularProgressIndicator()),
               query: fireBaseRef,
               itemBuilder: (context, snapshot, animation, index) {
-                 final title = snapshot.child('post').value.toString();
+                final title = snapshot.child('post').value.toString();
 
                 // Apply search filtering
                 if (searchQuery.isNotEmpty &&
@@ -124,8 +129,41 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                 return ListTile(
                   leading: CircleAvatar(child: Text('${index + 1}')),
                   title: Text(title),
+                  trailing: PopupMenuButton(
+                    icon: Icon(Icons.more_vert),
+                    itemBuilder: (context) {
+                      return [
+                        PopupMenuItem(
+                          onTap: () {
+                            postUpdateDialog(
+                              id: snapshot.child('id').value.toString(),
+                              fireBaseRef: fireBaseRef,
+                              auth: auth,
+                              postTitle: title,
+                              context: context,
+                              updateController: updateController,
+                              updateFocusNode: updateFocusNode,
+                              rootcontext: context,
+                            );
+                          },
+                          value: 1,
+                          child: ListTile(
+                            leading: CircleAvatar(child: Icon(Icons.edit)),
+                            title: Text("Edit"),
+                          ),
+                        ),
+
+                        PopupMenuItem(
+                          value: 2,
+                          child: ListTile(
+                            leading: CircleAvatar(child: Icon(Icons.delete)),
+                            title: Text("Delete"),
+                          ),
+                        ),
+                      ];
+                    },
+                  ),
                 );
-               
               },
             ),
           ),
