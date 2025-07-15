@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:firebase_practice/UI/posts/add_post.dart';
 import 'package:firebase_practice/provider/search_provider.dart';
+import 'package:firebase_practice/widgets/post_delete_dialog.dart';
 import 'package:firebase_practice/widgets/post_update_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -154,6 +155,15 @@ class _PostScreenState extends ConsumerState<PostScreen> {
                         ),
 
                         PopupMenuItem(
+                          onTap: () {
+                            postDeleteDialog(
+                              fireBaseRef: fireBaseRef,
+                              context: context,
+                              rootcontext: context,
+                              id: snapshot.child('id').value.toString(),
+                            );
+                           
+                          },
                           value: 2,
                           child: ListTile(
                             leading: CircleAvatar(child: Icon(Icons.delete)),
